@@ -1,0 +1,136 @@
+# Makefile for database package for Octave
+#
+# Copyright (C) 2016 Olaf Till <i7tiol@t-online.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+
+# before cross building, pre-build at least $(TEXIFILE) natively,
+# e.g. with targets 'doc', 'html', or 'release'
+
+
+# Uncomment this for a release.
+RELEASE := yes
+ifdef RELEASE
+# Currently this avoids warnings due to introduction of Octave
+# namespaces in Octave-4.1.0+. If the deprecated versions will be
+# available long enough, we could get away with just suppressing the
+# warnings.
+RELEASE_CXXFLAGS = -Wno-deprecated-declarations
+endif
+
+CXXCPP = @CXXCPP@
+
+MKOCTFILE ?= @MKOCTFILE@
+PG_CONFIG ?= @PG_CONFIG@
+OCTAVE_CONFIG ?= @OCTAVE_CONFIG@
+ifndef CXXFLAGS
+CXXFLAGS := $(shell $(MKOCTFILE) -p CXXFLAGS)
+endif
+
+CANONICAL_HOST_TYPE := $(shell $(OCTAVE_CONFIG) -p CANONICAL_HOST_TYPE))
+
+EXTRALIBS = 
+ifneq (,$(findstring mingw,$(CANONICAL_HOST_TYPE)))
+  EXTRALIBS = -lws2_32
+endif
+
+octs = pq_interface.oct $(extra_octs)
+
+extra_octs = var2bytea.oct bytea2var.oct
+
+IFOBJECTS := __pq_connect__.o pq_close.o pq_exec.o converters.o \
+             converters_arr_comp.o pq_connection.o command.o \
+             pq_update_types.o pq_lo.o pq_conninfo.o __pq_internal_exit__.o \
+             error-helpers.o
+
+INFOFILE := ../doc/database.info
+TEXIFILE := $(addsuffix .texi,$(basename $(INFOFILE)))
+TXIFILE := $(addsuffix .txi,$(basename $(INFOFILE)))
+HTMLDIR := ../doc/html/
+
+DEFUNDLDFILES := pq_close.cc pq_exec.cc pq_update_types.cc pq_lo.cc \
+                 pq_conninfo.cc var2bytea.cc bytea2var.cc
+DSFILES := $(addsuffix .docstrings,$(DEFUNDLDFILES))
+MFILES := $(wildcard *.m) $(wildcard ../inst/*.m)
+.PHONY: all clean doc release html
+
+.INTERMEDIATE: MFDOCSTRINGS $(DSFILES)
+
+all: doc $(octs)
+
+release: doc html
+
+pq_interface.oct: $(IFOBJECTS)
+	$(MKOCTFILE) -o pq_interface.oct -L`$(PG_CONFIG) --libdir` -lpq $(IFOBJECTS) $(EXTRALIBS)
+
+%.oct: %.o error-helpers.o
+	$(MKOCTFILE) $< error-helpers.o
+
+converters.o: converters.cc converters.h wrap_endian.h config.h error-helpers.h
+	CXXFLAGS="$(CXXFLAGS) $(RELEASE_CXXFLAGS)" $(MKOCTFILE) -I`$(PG_CONFIG) --includedir` -c converters.cc
+
+converters_arr_comp.o: converters_arr_comp.cc converters.h wrap_endian.h \
+                       pq_connection.h command.h config.h error-helpers.h
+	CXXFLAGS="$(CXXFLAGS) $(RELEASE_CXXFLAGS)" $(MKOCTFILE) -I`$(PG_CONFIG) --includedir` -c converters_arr_comp.cc
+
+error-helpers.o: error-helpers.cc error-helpers.h config.h
+	CXXFLAGS="$(CXXFLAGS) $(RELEASE_CXXFLAGS)" $(MKOCTFILE) -c error-helpers.cc
+
+# be on the safe side with respect to include files
+%.o: %.cc converters.h pq_connection.h command.h config.h error-helpers.h
+	CXXFLAGS="$(CXXFLAGS) $(RELEASE_CXXFLAGS)" $(MKOCTFILE) -I`$(PG_CONFIG) --includedir` -c $<
+
+doc: $(INFOFILE)
+
+$(INFOFILE): $(TEXIFILE)
+	makeinfo $(TEXIFILE) -o $(INFOFILE)
+
+html: $(TEXIFILE)
+	makeinfo --html -o $(HTMLDIR) $(TEXIFILE)
+
+$(TEXIFILE): $(TXIFILE) MFDOCSTRINGS $(DSFILES) munge-texi.pl
+	./munge-texi.pl MFDOCSTRINGS $(DSFILES) < $(TXIFILE) > $(TEXIFILE)
+
+MFDOCSTRINGS: $(MFILES) mkdoc.pl
+	./mkdoc.pl $(MFILES) > MFDOCSTRINGS
+
+# take long CPP macro names, unlikely to be present in package code
+# (which is checked) or to be defined by Octave (which can't be
+# checked)
+RDEFUN_DLD := DEFUN_DLD_REPLACEMENT_FOR_PACKAGE_DOCS
+RDEFUNX_DLD := DEFUNX_DLD_REPLACEMENT_FOR_PACKAGE_DOCS
+# Docstrings defined as C strings are obtained from a compiled C
+# program. This should be the cleanest way to correctly get all
+# special characters defined in these strings.
+%.cc.docstrings: %.bin
+	(echo "### This file is generated automatically from the"; echo "### corresponding .cc file by a Makefile rule."; echo ""; ./$<) > $@
+# Explanation of the command after the checks: Macro names are changed
+# by `sed' so that a different definition can be given to them on the
+# `cpp' commandline. After running the `cpp' command, one can be sure
+# that there are not more than one `$(RDEFUN_DLD)' resulting from a
+# DEFUN(X)_DLD invocation in the original code at one line, that every
+# occurance of `$(RDEFUN_DLD)' indeed corresponds to an original macro
+# invocation, and not to `DEFUN(X)_DLD' within a comment or a string,
+# and that we have all necessary information within one line of
+# text. The package code is expected to give the function
+# documentation as a string constant directly in the macro invocation,
+# as is normally done.
+%.bin: %.cc
+	if grep -q $(RDEFUN_DLD) $<; then echo "The string '$(RDEFUN_DLD)' must not be present in source code, but is in $<."; exit 1; fi
+	if grep -q $(RDEFUNX_DLD) $<; then echo "The string '$(RDEFUNX_DLD)' must not be present in source code, but is in $<."; exit 1; fi
+	(echo "#include <stdio.h>"; echo "int main () {"; sed -e s/DEFUN_DLD/$(RDEFUN_DLD)/g -e s/DEFUNX_DLD/$(RDEFUNX_DLD)/g $< | $(CXXCPP) `$(MKOCTFILE) -p INCFLAGS` -I`$(PG_CONFIG) --includedir` -x c++ -iquote '.' -D'$(RDEFUN_DLD)(name,args,nargout,doc)=$(RDEFUN_DLD)(name,doc)' -D'$(RDEFUNX_DLD)(name,fname,gname,args,nargout,doc)=$(RDEFUN_DLD)(name,doc)' - | sed -e '/.*$(RDEFUN_DLD)/!D'; echo "}";) | $(CXX) -x c++ -D'$(RDEFUN_DLD)(name,doc)=printf("%c" #name "\n@c " #name " $<\n" doc "\n\n", 0x1D);' -o $@ -
+
+clean:
+	$(RM) *.o octave-core *.oct *.cc.docstrings MFDOCSTRINGS $(INFOFILE) $(TEXIFILE) *~
