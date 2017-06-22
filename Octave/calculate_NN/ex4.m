@@ -16,12 +16,13 @@
 %
 
 %% Initialization
-clear ; close all; clc
+%clear ; close all; clc
+clc;
 
 %% Setup the parameters you will use for this exercise
-input_layer_size  = 10;  % 20x20 Input Images of Digits
+input_layer_size  = 301;  % 20x20 Input Images of Digits
 hidden_layer_size = 25;   % 25 hidden units
-num_labels = 2;          % 10 labels, from 1 to 10   
+num_labels = 21;          % 10 labels, from 1 to 10   
                           % (note that we have mapped "0" to label 10)
 
 %% =========== Part 1: Loading and Visualizing Data =============
@@ -31,21 +32,6 @@ num_labels = 2;          % 10 labels, from 1 to 10
 
 % Load Training Data
 fprintf('Loading and Visualizing Data ...\n')
-
-x_old = csvread('MACD02.csv');
-X = zeros((length(x_old)/10)-1,10);
-
-
-for i=1:(length(x_old)/10)-1
-  
-  X(i,:) = x_old((1+10*(i-1)):10*i,:);
-  goal(i) = x_old(1+i*10);
-  goal_pre(i) = x_old(i*10);
-endfor
-
-y = (goal-goal_pre)>0;
-y = y';
-m = size(X, 1);
 
 % Randomly select 100 data points to display
 sel = randperm(size(X, 1));
@@ -64,9 +50,9 @@ pause;
 fprintf('\nLoading Saved Neural Network Parameters ...\n')
 
 % Load the weights into variables Theta1 and Theta2
-load('ex4weights.mat');
-Theta1 = Theta1(1:hidden_layer_size,1:input_layer_size+1);
-Theta2 = Theta2(1:num_labels,1:hidden_layer_size+1);
+%load('ex4weights.mat');
+Theta1 = zeros(hidden_layer_size,input_layer_size+1);
+Theta2 = zeros(num_labels,hidden_layer_size+1);
 
 % Unroll parameters 
 nn_params = [Theta1(:) ; Theta2(:)];

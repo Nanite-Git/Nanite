@@ -84,8 +84,9 @@ Delta_2 = zeros(num_labels,hidden_layer_size+1);
 y_digit = zeros(m,num_labels);
 
 for c = 1:m
-y_digit(c, y(c,1)) = 1;
+  y_digit(c, y(c,1)+1) = 1;
 end
+
 
 a1 = X;
 
