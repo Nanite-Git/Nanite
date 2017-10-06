@@ -1,6 +1,0 @@
-/* Define as 1 if liboctinterp is old enough to provide error_state. */
-#undef HAVE_OCTAVE_ERROR_STATE
-
-/* Define as 1 if liboctinterp has
-'verror (octave_execution_exception&, const char *, va_list)'. */
-#undef HAVE_OCTAVE_VERROR_ARG_EXC
