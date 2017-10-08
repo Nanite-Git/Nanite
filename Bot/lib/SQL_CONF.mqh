@@ -134,6 +134,7 @@ int SQL_CONF::disconnect_db()
 int SQL_CONF::write_db(const MqlRates& hist_data[],const int& nr_elements, string tab = "")
 {
       string Query;
+      string clearQuery = "TRUNCATE test.historydata;";
       
       if (tab != "") {
           table = tab;
@@ -142,20 +143,22 @@ int SQL_CONF::write_db(const MqlRates& hist_data[],const int& nr_elements, strin
          Print ("No Table has been submitted. Use last submitted table" + table);
       }      
       
+      //Clear Table
+      MySqlExecute(identifier, clearQuery);
+      
       // multi-insert
       
       Print("Start copying data to table...\n");
       for(int count = 0; count < nr_elements ; count++) {
          Print(TimeToString(hist_data[count].time)," - ",hist_data[count].close);
          
-         Query = "INSERT INTO `" + table + "` (id, timestamp, close, high, low, open, volume) VALUES ("+
-                                                                                       (string)count+",\'"+
-                                                                                       (string)hist_data[count].time+"\',\'"+
-                                                                                       (string)hist_data[count].close+"\',\'"+
-                                                                                       (string)hist_data[count].high+"\',\'"+
-                                                                                       (string)hist_data[count].low+"\',\'"+
-                                                                                       (string)hist_data[count].open+"\',\'"+
-                                                                                       (string)hist_data[count].tick_volume+"\');";
+         Query = "INSERT INTO `" + table + "` (timestamp, close, high, low, open, volume) VALUES ('"+
+                                                                                       (string)hist_data[count].time+"','"+
+                                                                                       (string)hist_data[count].close+"','"+
+                                                                                       (string)hist_data[count].high+"','"+
+                                                                                       (string)hist_data[count].low+"','"+
+                                                                                       (string)hist_data[count].open+"','"+
+                                                                                       (string)hist_data[count].tick_volume+"');";
         if (MySqlExecute(identifier, Query))
            {
                //printf("i% % done",(count/nr_elements*100));
@@ -188,11 +191,20 @@ int SQL_CONF::create_table(const string& tab, string& Error, int tab_nr = 1)
       switch (tab_nr)
       {
          case 1: 
-            Query = "CREATE TABLE `" + table + "` (id int, timestamp datetime, "
-                                         "close double, high double, low double, open double, volume int)";
+            Query = "CREATE TABLE `" + table + "` ("+
+                                       "id int NOT NULL AUTO_INCREMENT, " +
+                                       "timestamp datetime, " +
+                                       "close double, " + 
+                                       "high double, " +
+                                       "low double, " +
+                                       "open double, " +
+                                       "volume int," + 
+                                       "PRIMARY KEY (ID))";
             break;
          case 2:
             Query = "CREATE TABLE `" + table + "` (flag int)";           
+            break;
+         case 99:
             break;
          default:
          break;

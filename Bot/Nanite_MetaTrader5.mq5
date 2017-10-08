@@ -91,7 +91,8 @@ void comSQL()
    newDataFlag = true;
 //---Parametrize the Start and Stop Time to copy One the Bar of the last 60 seconds
 //---Here we used 60 seconds to copy a 1Min-Period Bar
-   t_start = TimeCurrent()-60;      //Change the 60 Seconds to 600 Seconds if the Period is 10Min
+   int calc_start_time = 600*500;
+   t_start = TimeCurrent() - calc_start_time;      //Change the 60 Seconds to 600 Seconds if the Period is 10Min
    t_stop = TimeCurrent();
    
    printf("Start: %i",t_start);
@@ -105,9 +106,9 @@ void comSQL()
    sqlc.initialize_db();                  // initialize recommended values
    sqlc.connect_db();                     // connecting to database
    //------------------<CREATE A TABLE>-----------------------------//
-   //sqlc.create_table(tab_name, Errorcode, 1); 
+   //sqlc.create_table(g_tab_name, g_Errorcode, 1); 
    //----------------------<GET HISTORY DATA>-----------------------//
-   r_ch = CopyRates(Symbol(),PERIOD_M1,t_start,t_stop,hist_data);   // get histor values in 'hist_data'   
+   r_ch = CopyRates(Symbol(),PERIOD_M10,t_start,t_stop,hist_data);   // get histor values in 'hist_data'   
    printf("Nr of Bars wich will be written to Database: %i", r_ch);
    if(r_ch == -1) {
       Print("Error 'Copy Rates, r_ch = -1'");
@@ -119,7 +120,7 @@ void comSQL()
    sqlc.write_db(hist_data,r_ch,g_tab_name);  
    sqlc.set_newData_flag(g_flag_tab_name, newDataFlag, g_Errorcode);       // Errorcode is currently not evaluated
    //--------------------<DISCONNECT FROM DB>-----------------------//
-   sqlc.disconnect_db();                  // deinitialize the connection
+   sqlc.disconnect_db();                                                   // deinitialize the connection
 }
 //+------------------------------------------------------------------+
 //| New Bar recognizer                                               |
@@ -131,6 +132,7 @@ void recNewBar()
    g_symbol = g_current_chart.GetSymbol();       // Get chart symbol, associated with current class instance
    g_period = g_current_chart.GetPeriod();       // Get chart period, associated with current class instance
    
+   //--- currently the Periode of the bars is static written to PERIODE_M10 in lib_cisnewbar.mqh
    if(g_current_chart.isNewBar())                // Make request for new bar using the isNewBar() method, associated with current class instance     
    {
       g_comment=g_current_chart.GetComment();    // Get comment of executing method, associated with current class instance

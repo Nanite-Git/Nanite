@@ -19,19 +19,20 @@ Socket = ''
 
 def my_configparser():
     config = configparser.ConfigParser()
-    config.read('MyConnection.INI')
+    #config.read('MyConnection.INI')
     #print(config['MYSQL']['Host'])     # -> "/path/name/"
     
-    User = config['MYSQL']['User']
-    Password = config['MYSQL']['Password']
-    Host = config['MYSQL']['Host']
-    Database = config['MYSQL']['Database']
-    Port = config['MYSQL']['Port']
-    Socket = config['MYSQL']['Socket']
+    User = "root"#config['MYSQL']['User']
+    Password = ""#config['MYSQL']['Password']
+    Host = "127.0.0.1"#config['MYSQL']['Host']
+    Database = "test"#config['MYSQL']['Database']
+    Port = "3306"#config['MYSQL']['Port']
+    Socket = "0"#config['MYSQL']['Socket']
 
     print(User,Password,Host,Database,Port,Socket)
-
-    return config
+    cnx = connect_db(User, Password, Host, Database, Port, Socket)
+    
+    return config, cnx
 
 
 
@@ -89,31 +90,3 @@ def read_from_sql(cursor, query):
         dataset.append(row)
     
     return dataset
-
-
-
-
-if __name__ == '__main__':
-    
-    #Get parameter to connect to Database
-    config = my_configparser()
-    
-    #Establishing connection to database
-    cnx = connect_db(User,Password, Host, Database, Port, Socket)
-    
-    #Get cursorinformation from database
-    cnx_cursor = cnx.cursor()
-    
-    #while(1):
-    if(read_flag_and_reset()):
-        query = ("SELECT LAST(*) FROM test.historydata ")
-        read_from_sql(cnx_cursor, query) 
-    time.sleep(1)
-        
-    cnx.commit()
-    
-    #CLOSE Database
-    cnx_cursor.close()
-    cnx.close()
-    
-    
