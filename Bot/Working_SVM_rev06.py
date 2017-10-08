@@ -68,7 +68,7 @@ def creating_binary_labels(close_list, open_price_list):
     label_pos = 'True'
     
     if label_pos == 'True':
-        label_list = close_list - [x*1.0 for x in open_price_list]        #0018264
+        label_list = close_list - [x*1.000 for x in open_price_list]        #0018264
     else:
         label_list = open_price_list - [x*1.0 for x in close_list]
     label_list = label_list[2:-1]
@@ -120,7 +120,7 @@ def fearure_creation(timestamp_list, close_list, high_list, low_list, open_price
         close_change_percentage = (close_list[i] - close_list[i-1])/close_list[i-1]
         close_change_percentage_list.append(close_change_percentage)
         
-        open_change_percentage = (open_price_list[i+1] - open_price_list[i])/open_price_list[i]
+        open_change_percentage = (open_price_list[i] - open_price_list[i-1])/open_price_list[i-1]
         open_change_percentage_list.append(open_change_percentage)
         high_change_percentage = (high_list[i] - high_list[i-1])/high_list[i-1]
         high_change_percentage_list.append(high_change_percentage)
@@ -139,13 +139,13 @@ def fearure_creation(timestamp_list, close_list, high_list, low_list, open_price
         closesum+=close_list[i]
         highsum+=high_list[i]
         lowsum+=low_list[i]
-        Open_price_moving_average = float(opensum/i+1) / open_price_list[i+1]
+        Open_price_moving_average = float(opensum/i) / open_price_list[i]
         Open_price_moving_average_list.append(Open_price_moving_average)
-        High_price_moving_average = float(highsum/i+1) / high_list[i+1]
+        High_price_moving_average = float(highsum/i) / high_list[i]
         High_price_moving_average_list.append(High_price_moving_average)
-        Close_price_moving_average = float(closesum/i+1) / close_list[i+1]
+        Close_price_moving_average = float(closesum/i) / close_list[i]
         Close_price_moving_average_list.append(Close_price_moving_average)
-        Low_price_moving_average = float(lowsum/i+1) / low_list[i+1]
+        Low_price_moving_average = float(lowsum/i) / low_list[i]
         Low_price_moving_average_list.append(Low_price_moving_average)
             
     
@@ -238,7 +238,7 @@ def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_lis
         close_change_percentage = (close_list[i] - close_list[i-1])/close_list[i-1]
         close_change_percentage_list.append(close_change_percentage)
         
-        open_change_percentage = (open_price_list[i+1] - open_price_list[i])/open_price_list[i]
+        open_change_percentage = (open_price_list[i] - open_price_list[i-1])/open_price_list[i-1]
         open_change_percentage_list.append(open_change_percentage)
         high_change_percentage = (high_list[i] - high_list[i-1])/high_list[i-1]
         high_change_percentage_list.append(high_change_percentage)
@@ -257,13 +257,13 @@ def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_lis
         closesum+=close_list[i]
         highsum+=high_list[i]
         lowsum+=low_list[i]
-        Open_price_moving_average = float(opensum/i+1) / open_price_list[i+1]
+        Open_price_moving_average = float(opensum/i) / open_price_list[i]
         Open_price_moving_average_list.append(Open_price_moving_average)
-        High_price_moving_average = float(highsum/i+1) / high_list[i+1]
+        High_price_moving_average = float(highsum/i) / high_list[i]
         High_price_moving_average_list.append(High_price_moving_average)
-        Close_price_moving_average = float(closesum/i+1) / close_list[i+1]
+        Close_price_moving_average = float(closesum/i) / close_list[i]
         Close_price_moving_average_list.append(Close_price_moving_average)
-        Low_price_moving_average = float(lowsum/i+1) / low_list[i+1]
+        Low_price_moving_average = float(lowsum/i) / low_list[i]
         Low_price_moving_average_list.append(Low_price_moving_average)
             
     
@@ -418,8 +418,8 @@ if __name__ == '__main__':
     print( "SVM - RBF Kernel with Features : ")
         
     # Parameter für BTCUSD
-    C_val = 52000               # 60000 + i*4000
-    gamma_val = 0.028            # 0.7 + 0.2*(j/10)
+    C_val = 46000               # 60000 + i*4000
+    gamma_val = 0.035            # 0.7 + 0.2*(j/10)
     
     print("SVM-Parameter")
     print("C: ", C_val,"\nGamma: ",gamma_val)
@@ -427,12 +427,13 @@ if __name__ == '__main__':
 #        C_val = 52000 #20000 + i*4000
 #        gamma_val = 0.028
     print("...calculating...")
+    
     predicted4, test_label4, train_feature4, train_label4, test_feature4, clf =  svm_rbf(feature4, label_list,C_val, gamma_val)
 
     #    precision_sum.append(precision_score(predicted4, test_label4)*100)
     #    
     #    print(np.where(precision_sum == max(precision_sum)))
-    #print("Pred: ",predicted4[-10:],"\n","Real: ",test_label4[-10:])
+    print("Pred: ",predicted4[-10:],"\n","Real: ",test_label4[-10:])
     #    input("Wait key:")
     print( "-----------------------------------------------------------------------")
 
