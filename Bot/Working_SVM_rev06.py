@@ -71,7 +71,7 @@ def creating_binary_labels(close_list, open_price_list):
         label_list = close_list - [x*1.000 for x in open_price_list]        #0018264
     else:
         label_list = open_price_list - [x*1.0 for x in close_list]
-    label_list = label_list[2:-1]
+    label_list = label_list[2:]
     for i in range(len(label_list)):
         if(label_list[i]>0):
             label_list[i]=1
@@ -81,7 +81,7 @@ def creating_binary_labels(close_list, open_price_list):
 
 
 
-def fearure_creation(timestamp_list, close_list, high_list, low_list, open_price_list, volume_list, x):
+def fearure_creation(timestamp_list, close_list, high_list, low_list, open_price_list, volume_list, x, feat_num = 1):
     #Initialising
     open_change_percentage_list=[]
     close_change_percentage_list=[]
@@ -195,11 +195,30 @@ def fearure_creation(timestamp_list, close_list, high_list, low_list, open_price
                                 High_price_moving_average_list, 
                                 Low_price_moving_average_list))
     
+    feature5 = np.column_stack((open_price_list[1:-1], 
+                                close_list[1:-1], 
+                                high_list[1:-1], 
+                                low_list[1:-1], 
+                                volume_list[1:-1]))
+
+    feature6 = None
+    
     label_list = creating_binary_labels(close_list, open_price_list)
     
-    return feature1, feature2, feature3, feature4, label_list
+    if(feat_num == 1):
+        return feature1, label_list
+    elif(feat_num == 2):
+        return feature2, label_list
+    elif (feat_num == 3):
+        return feature3, label_list
+    elif (feat_num == 4):
+        return feature4, label_list
+    elif (feat_num == 5):
+        return feature5, label_list
+    elif (feat_num == 6):
+        return feature6, label_list
 
-def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_list, volume_list, x):
+def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_list, volume_list, x, feat_num):
     #Initialising
     open_change_percentage_list=[]
     close_change_percentage_list=[]
@@ -301,7 +320,7 @@ def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_lis
                                 High_price_moving_average_list, 
                                 Low_price_moving_average_list)) 
     
-    feature_next = np.column_stack((open_change_percentage_list, 
+    feature4 = np.column_stack((open_change_percentage_list, 
                                 close_change_percentage_list, 
                                 high_change_percentage_list, 
                                 low_change_percentage_list, 
@@ -311,8 +330,28 @@ def fearure_next(timestamp_list, close_list, high_list, low_list, open_price_lis
                                 Open_price_moving_average_list, 
                                 Close_price_moving_average_list, 
                                 High_price_moving_average_list, 
-                                Low_price_moving_average_list))    
-    return feature_next
+                                Low_price_moving_average_list)) 
+        
+    feature5 = np.column_stack((open_price_list[1:-1], 
+                                close_list[1:-1], 
+                                high_list[1:-1], 
+                                low_list[1:-1], 
+                                volume_list[1:-1]))
+    
+    feature6 = None
+    
+    if(feat_num == 1):
+        return feature1
+    elif(feat_num == 2):
+        return feature2
+    elif (feat_num == 3):
+        return feature3
+    elif (feat_num == 4):
+        return feature4
+    elif (feat_num == 5):
+        return feature5
+    elif (feat_num == 6):
+        return feature6
 
 
 
@@ -385,41 +424,18 @@ if __name__ == '__main__':
     fp.close()
    
     x = 5
-    feature1, feature2, feature3, feature4, label_list = fearure_creation(timestamp_list, close_list, 
-                                                                          high_list, low_list, open_price_list, 
-                                                                          volume_list, x )
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    print( "SVM - RBF Kernel with Features : ")
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%")
-#    predicted1, test_label1, train_feature1, train_label1, test_feature1 = svm_rbf(feature1, label_list)
-#    print( "-----------------------------------------------------------------------")
-#    
-#    
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    print( "SVM - RBF Kernel with Features : ")
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%,")
-#    print( "Open Difference% , Volume Difference%, ")
-#    predicted2, test_label2, train_feature2, train_label2, test_feature2= svm_rbf(feature2, label_list)
-#    print( "-----------------------------------------------------------------------")
-#
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    print( "SVM - RBF Kernel with Features : ")
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%,")
-#    print( "Open MovingAvg, Close MovingAvg, High MovingAvg, Low MovingAvg")
-#    predicted3, test_label3, train_feature3, train_label3, test_feature3= svm_rbf(feature3, label_list)
-#    print( "-----------------------------------------------------------------------")
-#    
+    feat_num = 5
+    feature, label_list = fearure_creation(timestamp_list, close_list, 
+                                           high_list, low_list, open_price_list, 
+                                           volume_list, x ,feat_num)
     
     print()
     print( "-----------------------------------------------------------------------")
     print( "SVM - RBF Kernel with Features : ")
         
     # Parameter für BTCUSD
-    C_val = 46000               # 60000 + i*4000
-    gamma_val = 0.035            # 0.7 + 0.2*(j/10)
+    C_val = 1#46000               # 60000 + i*4000
+    gamma_val = 1#0.035            # 0.7 + 0.2*(j/10)
     
     print("SVM-Parameter")
     print("C: ", C_val,"\nGamma: ",gamma_val)
@@ -428,12 +444,12 @@ if __name__ == '__main__':
 #        gamma_val = 0.028
     print("...calculating...")
     
-    predicted4, test_label4, train_feature4, train_label4, test_feature4, clf =  svm_rbf(feature4, label_list,C_val, gamma_val)
+    predicted, test_label, train_feature, train_label, test_feature, clf =  svm_rbf(feature, label_list,C_val, gamma_val)
 
     #    precision_sum.append(precision_score(predicted4, test_label4)*100)
     #    
     #    print(np.where(precision_sum == max(precision_sum)))
-    print("Pred: ",predicted4[-10:],"\n","Real: ",test_label4[-10:])
+    print("Pred: ",predicted[-10:],"\n","Real: ",test_label[-10:])
     #    input("Wait key:")
     print( "-----------------------------------------------------------------------")
 
@@ -467,53 +483,12 @@ if __name__ == '__main__':
 
     feature_next = fearure_next(timestamp_list_pred, close_list_pred, 
                                 high_list_pred, low_list_pred, 
-                                open_price_list_pred, volume_list_pred, x )
+                                open_price_list_pred, volume_list_pred, x , feat_num)
     
     predicted_next = clf.predict(feature_next)
     print("New: ",predicted_next[-10:])
     
     
-    
-#    plotting_svm(predicted1, test_label1,"Plots/hcl/hcltech1_22_apr_rbf.jpg",'r')
-#    plotting_svm(predicted2, test_label2,"Plots/hcl/hcltech2_22_apr_rbf.jpg",'g')
-#    plotting_svm(predicted3, test_label3,"Plots/hcl/hcltech3_22_apr_rbf.jpg",'b')
-#    plotting_svm(predicted4, test_label4,"Plots/hcl/hcltech4_22_apr_rbf.jpg",'y')
-#    print()
-#    print( "*******************************RNN*************************************")
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    #print( "SVM - RBF Kernel with Features : "
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%")
-#    predicted_NN_1=neural_networks(train_feature1, train_label1, test_feature1, test_label1)
-#    print( "-----------------------------------------------------------------------")
-#
-#
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    #print( "SVM - RBF Kernel with Features : "
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%,")
-#    print( "Open Difference% , Volume Difference%, ")
-#    predicted_NN_2=neural_networks(train_feature2, train_label2, test_feature2, test_label2)
-#    print( "-----------------------------------------------------------------------")
-#   
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    #print( "SVM - RBF Kernel with Features : "
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%,")
-#    print( "Open MovingAvg, Close MovingAvg, High MovingAvg, Low MovingAvg")
-#    predicted_NN_3=neural_networks(train_feature3, train_label3, test_feature3, test_label3)
-#    print( "-----------------------------------------------------------------------")
-#
-#    print()
-#    print( "-----------------------------------------------------------------------")
-#    #print( "SVM - RBF Kernel with Features : "
-#    print( "Open Change%, Close Change%, High Change%, Low Change%, Volume Change%")
-#    print( "Open Difference% , Volume Difference%, Open Price Moving Avg")
-#    print( "Close Price Moving Avg, High Price Moving Avg, Low Price Moving Avg")
-#    predicted_NN_4=neural_networks(train_feature4, train_label4, test_feature4, test_label4)
-#    print( "-----------------------------------------------------------------------")
-#   
-#    plotting_svm(predicted_NN_1, test_label1,"Plots/hcl/hcltech1_22_apr_NN.jpg",'r')
-#    plotting_svm(predicted_NN_2, test_label2,"Plots/hcl/hcltech2_22_apr_NN.jpg",'g')
-#    plotting_svm(predicted_NN_2, test_label3,"Plots/hcl/hcltech3_22_apr_NN.jpg",'b')
-#    plotting_svm(predicted_NN_2, test_label4,"Plots/hcl/hcltech4_22_apr_NN.jpg",'y')
+# =============================================================================
+#     END OF CODE
+# =============================================================================
